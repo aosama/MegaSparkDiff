@@ -50,12 +50,14 @@ object SparkFactory {
     *                 you can specify "local[1]" this means spark will use 1 core only. Alternatively you can specify
     *                 "local[*]" this means spark will figure out how many cores you have and will use them all.
     */
-  def initializeSparkLocalMode(numCores: String): Unit = {
+  def initializeSparkLocalMode(numCores: String , logLevel :String , defaultPartitions :String): Unit = {
     conf = new SparkConf().setAppName("megasparkdiff")
       .setMaster(numCores)
       .set("spark.driver.host", "localhost")
       .set("spark.ui.enabled","false") //disable spark UI
+      .set("spark.sql.shuffle.partitions",defaultPartitions)
     sparkSession = SparkSession.builder.config(conf).getOrCreate()
+    sparkSession.sparkContext.setLogLevel(logLevel)
   }
 
   def initializeDataBricks(dataBricksSparkSession: SparkSession) : Unit ={
@@ -125,6 +127,41 @@ object SparkFactory {
       .option("dbtable", sqlQuery)
       .option("user", username)
       .option("password", password)
+      .load()
+    jdbcDF.createOrReplaceTempView(tempViewName)
+
+    val appleTable: AppleTable = new AppleTable(SourceType.JDBC,  jdbcDF,delimiter.getOrElse(null) , tempViewName)
+    return appleTable
+  }
+
+  /**
+    * This method will create an AppleTable from a query that retrieves data from a database
+    * accessed through JDBC connection.
+    *
+    * @param driverClassName JDBC driver name
+    * @param jdbcUrl JDBC URL
+    * @param username Username for database connection
+    * @param password Password for database connection
+    * @param sqlQuery Query to retrieve the desired data from database
+    * @param tempViewName temporary table name for source data
+    * @param delimiter source data separation character
+    * @return custom table containing the data to be compared
+    */
+  def parallelizeJDBCSource(driverClassName: String, jdbcUrl: String, username: String, password: String, sqlQuery: String,
+                            tempViewName: String , delimiter: Option[String] , partitionColumn: String
+                           , lowerBound :String , upperBound :String, numPartitions :String) : AppleTable =
+  {
+    val jdbcDF: DataFrame = sparkSession.sqlContext.read
+      .format("jdbc")
+      .option("driver" , driverClassName)
+      .option("url", jdbcUrl)
+      .option("dbtable", sqlQuery)
+      .option("user", username)
+      .option("password", password)
+      .option("partitionColumn", partitionColumn)
+      .option("lowerBound", lowerBound)
+      .option("upperBound", upperBound)
+      .option("numPartitions", numPartitions)
       .load()
     jdbcDF.createOrReplaceTempView(tempViewName)
 

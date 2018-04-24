@@ -1,3 +1,5 @@
+[![Black Duck Security Risk](https://copilot.blackducksoftware.com/github/repos/FINRAOS/MegaSparkDiff/branches/develop/badge-risk.svg)](https://copilot.blackducksoftware.com/github/repos/FINRAOS/MegaSparkDiff/branches/develop)
+
 <h1>MegaSparkDiff</h1>
     
     MegaSparkDiff is an open source tool that helps you compare any pair
@@ -15,7 +17,7 @@ How to Use form Within a Java or SCALA Project
 <dependency>
     <groupId>org.finra.megasparkdiff</groupId>
     <artifactId>mega-spark-diff</artifactId>
-    <version>0.1.2</version>
+    <version>0.1.3</version>
 </dependency>
 ```
 
